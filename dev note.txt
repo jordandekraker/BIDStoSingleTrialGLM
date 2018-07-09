@@ -1,0 +1,9 @@
+.LOG
+
+
+9:58 PM 6/8/2018
+spm_jobman returns directory related error, linked matlabbatch's dir field to BIDS dir. Still returned an error, maybe due to the fact that I don't actually have the post-fmriprep functional run file in the bids_test directory. Need to wait for Jordan's reply, since I cant find it on Graham.
+5:06 PM 6/17/2018
+can use spm_vol to read sub(i).run(j) which contains the nii.gz file. It says compressed nifti is not supported but the output seems to be okay (at least the number of time points is correct)
+12:59 PM 7/9/2018
+finished coding the BIDS part, still using for loops, need to test on multiple post-fmriprep subjects, with proper events.tsv
