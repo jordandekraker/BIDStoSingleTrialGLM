@@ -12,7 +12,7 @@ function events=load_tsv(bids_dir,subject_id,run,task)
 
 %% Initialize variables.
 %BIDS file name
-filename = strcat(bids_dir,'/derivatives/fmriprep_1.0.7/fmriprep/',subject_id,'/func/',subject_id,'_',task,run,'events.tsv');
+filename = strcat(bids_dir,'/',subject_id,'/func/',subject_id,'_',task,run,'events.tsv');
 delimiter = '\t';
 startRow = 2;
 

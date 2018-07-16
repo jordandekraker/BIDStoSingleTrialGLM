@@ -9,8 +9,7 @@ s=dbstack();
 folderpath=erase(git_file,s(1).name);
 %% step 1 generate alltrial regressor and noise regressor
 
-%load the template in the software path
-load(strcat(folderpath,'template_AvsB.mat'));
+
 
 %raw_dir according to sudesna's graham folder (pre-BIDS)
 %bids_dir according to Jordan's graham folder (post-BIDS, post-fmriprep)
@@ -25,7 +24,7 @@ switch bids
         mkdir (parent,'temp');
         output_dir=strcat(bids_dir,'/derivatives/single_trial_GLM/output/');
         temp_dir=strcat(bids_dir,'/derivatives/single_trial_GLM/temp/');
-        copyfile strcat(folderpath,'template_AvsB.mat') temp_dir; %need to test when the whole script is complete
+        copyfile(strcat(folderpath,'template_AvsB.mat'), temp_dir); %need to test when the whole script is complete
         %get all subject from BIDS base directory
         filekey=fullfile(bids_dir,'sub-*');
         file=dir(filekey);
@@ -54,6 +53,8 @@ switch bids
             %loop through runs for each participants, store output in the
             %structure named "sub"
             for j=1:length(sub(i).run)
+                %load the template in the software path
+                load(strcat(folderpath,'template_AvsB.mat'));
                 %make run-specific dir
                 mkdir(subj_temp,strcat('run_', num2str(j)));
                 run_temp=strcat(subj_temp,strcat('run_', num2str(j)));
@@ -62,7 +63,8 @@ switch bids
                 matlabbatch{1}.spm.stats.fmri_spec.dir=cellstr(run_temp);
                 run=regexp(sub(i).run{j},'run-\w*_bold_','match');%find each run to load the events.tsv
                 sub(i).runevent{j}=load_tsv(bids_dir,subject_id{i},run{1},task{1});%store the loaded event files in sub.runevent
-                sub(i).runconf{j}=load_confounds_2(bids_dir,subject_id{i},run{1},task{1});
+                conf_name=strcat(bids_dir,'/derivatives/fmriprep_1.0.7/fmriprep/',subject_id{i},'/func/',subject_id{i},'_',task{1},run{1},'confounds.tsv');%use run{1} since it's iteratively defined
+                sub(i).runconf{j}=tdfread(conf_name,'tab');
                 %% step 1 generate alltrialregressor (convolve with hrf)
                     %point the ...sess.scans to the correct file
                     %specify each time slice in the nii file
@@ -78,7 +80,7 @@ switch bids
                     matlabbatch{1}.spm.stats.fmri_spec.sess.scans=sliceinfo;
                 matlabbatch{1}.spm.stats.fmri_spec.sess.cond.onset = cell2mat(sub(i).runevent{1,j}(:,1));
                 matlabbatch{1}.spm.stats.fmri_spec.sess.cond.duration = cell2mat(sub(i).runevent{1,j}(1,2));
-                save(strcat(run_temp,'step1.mat'),'matlabbatch');
+                save(strcat(run_temp,'/','step1.mat'),'matlabbatch');
                 %delete('SPM.mat');   
                 
                 spm_jobman('run',matlabbatch);%should generate SPM.mat in subj_temp
@@ -89,8 +91,13 @@ switch bids
                 delete('SPM.mat');
                 alltrials = SPM1.SPM.xX.X(:,1);
 
-                motion = cell2mat(sub(i).runconf{1, j}(:,30:35)); %6 motion parameters
-                motion = sum(motion,2);
+                X = sub(i).runconf{j}.X; %6 motion parameters
+                Y = sub(i).runconf{j}.Y;
+                Z = sub(i).runconf{j}.Z;
+                RotX = sub(i).runconf{j}.RotX;
+                RotY = sub(i).runconf{j}.RotY;                
+                RotZ = sub(i).runconf{j}.RotZ;
+                motion = X+Y+Z+RotX+RotY+RotZ;
 
                 regressors_matlabbatch = cell(length(sub(i).runevent{1,j}),1);
                 %loop through trials
@@ -99,7 +106,7 @@ switch bids
                     tic
                     matlabbatch = [];
                     %% step 2 generate singletrialregressor (convolve with hrf)
-                    load(strcat(run_temp,'step1.mat'))%load matlabbatch
+                    load(strcat(run_temp,'/','step1.mat'))%load matlabbatch
                     matlabbatch{1}.spm.stats.fmri_spec.sess.cond.onset = sub(i).runevent{1,j}{trial,1};
                     matlabbatch{1}.spm.stats.fmri_spec.sess.cond.duration = sub(i).runevent{1,j}{trial,2};
                     spm_jobman('run',matlabbatch);%generate SPM.mat
@@ -119,11 +126,11 @@ switch bids
                     SPM3=load('SPM.mat');
                     delete('SPM.mat');                 
                     mkdir(run_temp,strcat('trial_', num2str(trial)));
-                    SPM3.SPM.swd=strcat(subj_temp,strcat('trial_', num2str(trial)));%set output dir, need to change workign dir back in the next loop
+                    SPM3.SPM.swd=strcat(run_temp,'/',strcat('trial_', num2str(trial)));%set output dir, need to change workign dir back in the next loop
                     spm_spm(SPM3.SPM); % lets spm_spm this SPM!!!
                     %movefile('beta_0001.nii',sprintf('outputs/beta_0001_trial-%03d.nii',trial));
                     regressors_matlabbatch{trial} = matlabbatch;        
-                    %delete('SPM.mat');
+                    delete('SPM.mat');
                     save(strcat(run_temp,'regressors_matlabbatch.mat'),'regressors_matlabbatch');
                 toc
                 end
