@@ -140,11 +140,11 @@ switch bids
         end 
     %% checkpoint 20180709
     %if not BIDS (**still unfinished**)
-    case 0
-        Subject_list=['BQ6','SH12','LH24','UO28','HE11','HE22','IS09','NL07','QK05','KX20','BH14','FO10','CD18'];
-        Subject_number=['s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12','s13','s14'];
-        %xlsread the raw event file (onsets in TR)
-        events=xlsread('C:\Users\haozi\Desktop\Anna_LSS\itemwise regressors\s1_r1_itemwise.xls');
+%     case 0
+%         Subject_list=['BQ6','SH12','LH24','UO28','HE11','HE22','IS09','NL07','QK05','KX20','BH14','FO10','CD18'];
+%         Subject_number=['s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12','s13','s14'];
+%         %xlsread the raw event file (onsets in TR)
+%         events=xlsread('C:\Users\haozi\Desktop\Anna_LSS\itemwise regressors\s1_r1_itemwise.xls');
 end
 
 
